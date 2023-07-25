@@ -1,0 +1,63 @@
+The following C# script for cBots collects data (ask, bid, volume) and creates a folder on the desktop to store the data as .csv. Unique files are made for each run.
+
+
+using System;
+using cAlgo.API;
+using cAlgo.API.Internals;
+using System.IO;
+
+namespace cAlgo.Robots
+{
+    [Robot(TimeZone = TimeZones.UTC)]
+    public class DataCollectorBot : Robot
+    {
+        [Parameter("Symbol", DefaultValue = "EURUSD")]
+        public new string SymbolName { get; set; }
+
+        private string filePath;
+        private string folderPath;
+
+        protected override void OnStart()
+        {
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            var fileName = $"{SymbolName}_data_{timestamp}.csv";
+            folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "cBotData");
+            Directory.CreateDirectory(folderPath);
+            filePath = Path.Combine(folderPath, fileName);
+
+            using (var writer = File.CreateText(filePath))
+            {
+                writer.WriteLine("Timestamp,Ask,Bid,Volume");
+            }
+
+            var symbol = Symbols.GetSymbol(SymbolName);
+
+            if (symbol == null)
+            {
+                Print("The specified symbol is not available.");
+                Stop();
+            }
+
+            AppendDataToFile(symbol);
+        }
+
+        protected override void OnTick()
+        {
+            var symbol = Symbols.GetSymbol(SymbolName);
+            AppendDataToFile(symbol);
+        }
+
+        private void AppendDataToFile(Symbol symbol)
+        {
+            using (var writer = File.AppendText(filePath))
+            {
+                writer.WriteLine($"{Server.Time},{symbol.Ask},{symbol.Bid},{symbol.TickValue}");
+            }
+        }
+
+        protected override void OnStop()
+        {
+            // Put your deinitialization logic here
+        }
+    }
+}
