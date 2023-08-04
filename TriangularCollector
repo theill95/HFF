@@ -1,0 +1,449 @@
+using System;
+using System.Linq;
+using System.IO;
+using cAlgo.API;
+using cAlgo.API.Indicators;
+using cAlgo.API.Internals;
+using cAlgo.Indicators;
+
+
+
+namespace cAlgo
+{
+    [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.None)]
+    public class Triangular : Robot
+    {
+
+        [Parameter("Min_Residual", DefaultValue = 0.0)]
+        public double Min_Residual { get; set; }
+        
+        private string[] CurrencyPairCodes = { "USDJPY", "GBPUSD", "AUDUSD", "USDCAD", "USDCHF", "EURUSD", "EURJPY", "EURGBP", "EURAUD", "EURCAD", "EURCHF", "GBPJPY", "GBPAUD", "GBPCHF", "GBPCAD", "AUDJPY", "AUDCAD", "AUDCHF", "CADJPY", "CADCHF" };
+
+        protected override void OnStart()
+        {
+            // Put your initialization logic here
+        }
+
+        protected override void OnTick()
+        {
+
+
+            // USD(1), EUR(2), JPY(3), GBP(4), AUD(5), CAD(6), CHF(7)
+
+            Symbol USDJPY = MarketData.GetSymbol("USDJPY");
+            Symbol GBPUSD = MarketData.GetSymbol("GBPUSD");
+            Symbol AUDUSD = MarketData.GetSymbol("AUDUSD");
+            Symbol USDCAD = MarketData.GetSymbol("USDCAD");
+            Symbol USDCHF = MarketData.GetSymbol("USDCHF");
+            Symbol EURUSD = MarketData.GetSymbol("EURUSD");
+
+
+            Symbol EURJPY = MarketData.GetSymbol("EURJPY");
+            Symbol EURGBP = MarketData.GetSymbol("EURGBP");
+            Symbol EURCHF = MarketData.GetSymbol("EURCHF");
+            Symbol EURAUD = MarketData.GetSymbol("EURAUD");
+            Symbol EURCAD = MarketData.GetSymbol("EURCAD");
+
+
+            Symbol GBPJPY = MarketData.GetSymbol("GBPJPY");
+            Symbol AUDJPY = MarketData.GetSymbol("AUDJPY");
+            Symbol CHFJPY = MarketData.GetSymbol("CHFJPY");
+            Symbol CADJPY = MarketData.GetSymbol("CADJPY");
+
+
+            Symbol GBPAUD = MarketData.GetSymbol("GBPAUD");
+            Symbol GBPCHF = MarketData.GetSymbol("GBPCHF");
+            Symbol GBPCAD = MarketData.GetSymbol("GBPCAD");
+
+
+            Symbol AUDCAD = MarketData.GetSymbol("AUDCAD");
+            Symbol AUDCHF = MarketData.GetSymbol("AUDCHF");
+
+            Symbol CADCHF = MarketData.GetSymbol("CADCHF");
+
+
+                        /*
+
+            Y_USDJPY = (USDJPY.Ask + USDJPY.Bid) / 2;
+            Y_GBPUSD = (GBPUSD.Ask + GBPUSD.Bid) / 2;
+            Y_EURJPY = (EURJPY.Ask + EURJPY.Bid) / 2;
+            Y_AUDUSD = (AUDUSD.Ask + AUDUSD.Bid) / 2;
+            Y_USDCHF = (USDCHF.Ask + USDCHF.Bid) / 2;
+            Y_GBPJPY = (GBPJPY.Ask + GBPJPY.Bid) / 2;
+            Y_USDCAD = (USDCAD.Ask + USDCAD.Bid) / 2;
+            Y_EURGBP = (EURGBP.Ask + EURGBP.Bid) / 2;
+            Y_EURCHF = (EURCHF.Ask + EURCHF.Bid) / 2;
+            Y_AUDJPY = (AUDJPY.Ask + AUDJPY.Bid) / 2;
+            Y_NZDUSD = (NZDUSD.Ask + NZDUSD.Bid) / 2;
+            Y_CHFJPY = (CHFJPY.Ask + CHFJPY.Bid) / 2;
+            Y_EURAUD = (EURAUD.Ask + EURAUD.Bid) / 2;
+            Y_CADJPY = (CADJPY.Ask + CADJPY.Bid) / 2;
+            Y_GBPAUD = (GBPAUD.Ask + GBPAUD.Bid) / 2;
+            Y_EURCAD = (EURCAD.Ask + EURCAD.Bid) / 2;
+            Y_AUDCAD = (AUDCAD.Ask + AUDCAD.Bid) / 2;
+            Y_USDSGD = (USDSGD.Ask + USDSGD.Bid) / 2;
+            Y_GBPCHF = (GBPCHF.Ask + GBPCHF.Bid) / 2;
+            Y_USDTRY = (USDTRY.Ask + USDTRY.Bid) / 2;
+
+
+
+            double Y_11 = 0.0;
+            double Y_12 = 1 / Y_21;
+            double Y_13 = Log((USDJPY.Ask + USDJPY.Bid) / 2);
+            double Y_14 = 1 / Y_41;
+            double Y_15 = 1 / Y_51;
+            double Y_16 = Log((USDCAD.Ask + USDCAD.Bid) / 2);
+            double Y_17 = Log((USDCHF.Ask + USDCHF.Bid) / 2);
+            double Y_21 = Log((EURUSD.Ask + EURUSD.Bid) / 2);
+            double Y_22 = 0.0;
+            double Y_23 = Log((EURJPY.Ask + EURJPY.Bid) / 2);
+            double Y_24 = Log((EURGBP.Ask + EURGBP.Bid) / 2);
+            double Y_25 = Log((EURAUD.Ask + EURAUD.Bid) / 2);
+            double Y_26 = Log((EURCAD.Ask + EURCAD.Bid) / 2);
+            double Y_27 = Log((EURCHF.Ask + EURCHF.Bid) / 2);
+            double Y_31 = 1 / Y_13;
+            double Y_32 = 1 / Y_23;
+            double Y_33 = 0.0;
+            double Y_34 = 1 / Y_43;
+            double Y_35 = 1 / Y_53;
+            double Y_36 = 1 / Y_63;
+            double Y_37 = 1 / Y_73;
+            double Y_41 = Log((EURCHF.Ask + EURCHF.Bid) / 2);
+            double Y_42 = 1 / Y_24;
+            double Y_43 = Log((GBPJPY.Ask + GBPJPY.Bid) / 2);
+            double Y_44 = 0.0;
+            double Y_45 = Log((GBPAUD.Ask + GBPAUD.Bid) / 2);
+            double Y_46 = Log((GBPCAD.Ask + GBPCAD.Bid) / 2);
+            double Y_47 = Log((GBPCHF.Ask + GBPCHF.Bid) / 2);
+            double Y_51 = Log((AUDUSD.Ask + AUDUSD.Bid) / 2);
+            double Y_52 = 1 / Y_25;
+            double Y_53 = Log((AUDJPY.Ask + AUDJPY.Bid) / 2);
+            double Y_54 = 1 / Y_45;
+            double Y_55 = 0.0;
+            double Y_56 = Log((AUDCAD.Ask + AUDCAD.Bid) / 2);
+            double Y_57 = Log((AUDCHF.Ask + AUDCHF.Bid) / 2);
+            double Y_61 = 1 / Y_16;
+            double Y_62 = 1 / Y_26;
+            double Y_63 = Log((CADJPY.Ask + CADJPY.Bid) / 2);
+            double Y_64 = 1 / Y_46;
+            double Y_65 = 1 / Y_56;
+            double Y_66 = 0.0;
+            double Y_67 = Log((CADCHF.Ask + CADCHF.Bid) / 2);
+            double Y_71 = 1 / Y_17;
+            double Y_72 = 1 / Y_27;
+            double Y_73 = Log((CHFJPY.Ask + CHFJPY.Bid) / 2);
+            double Y_74 = 1 / Y_47;
+            double Y_75 = 1 / Y_57;
+            double Y_76 = 1 / Y_67;
+            double Y_77 = 0.0;
+
+*/
+
+
+
+double[,] Y = new double[7, 7] 
+            {
+                {
+                    0.0,
+                    Math.Log(1 / ((EURUSD.Ask + EURUSD.Bid) / 2)),
+                    Math.Log((USDJPY.Ask + USDJPY.Bid) / 2),
+                    Math.Log(1 / ((GBPUSD.Ask + GBPUSD.Bid) / 2)),
+                    Math.Log(1 / ((AUDUSD.Ask + AUDUSD.Bid) / 2)),
+                    Math.Log((USDCAD.Ask + USDCAD.Bid) / 2),
+                    Math.Log((USDCHF.Ask + USDCHF.Bid) / 2)
+                },
+
+                {
+                    Math.Log((EURUSD.Ask + EURUSD.Bid) / 2),
+                    0.0,
+                    Math.Log((EURJPY.Ask + EURJPY.Bid) / 2),
+                    Math.Log((EURGBP.Ask + EURGBP.Bid) / 2),
+                    Math.Log((EURAUD.Ask + EURAUD.Bid) / 2),
+                    Math.Log((EURCAD.Ask + EURCAD.Bid) / 2),
+                    Math.Log((EURCHF.Ask + EURCHF.Bid) / 2)
+
+
+                },
+                {
+                    Math.Log(1 / ((USDJPY.Ask + USDJPY.Bid) / 2)),
+                    Math.Log(1 / ((EURJPY.Ask + EURJPY.Bid) / 2)),
+                    0.0,
+                    Math.Log(1 / ((GBPJPY.Ask + GBPJPY.Bid) / 2)),
+                    Math.Log(1 / ((AUDJPY.Ask + AUDJPY.Bid) / 2)),
+                    Math.Log(1 / ((CADJPY.Ask + CADJPY.Bid) / 2)),
+                    Math.Log(1 / ((CHFJPY.Ask + CHFJPY.Bid) / 2))
+
+                },
+                {
+                    Math.Log((GBPUSD.Ask + GBPUSD.Bid) / 2),
+                    Math.Log(1 / ((EURGBP.Ask + EURGBP.Bid) / 2)),
+                    Math.Log((GBPJPY.Ask + GBPJPY.Bid) / 2),
+                    0.0,
+                    Math.Log((GBPAUD.Ask + GBPAUD.Bid) / 2),
+                    Math.Log((GBPCAD.Ask + GBPCAD.Bid) / 2),
+                    Math.Log((GBPCHF.Ask + GBPCHF.Bid) / 2)
+
+                },
+                {
+                    Math.Log((AUDUSD.Ask + AUDUSD.Bid) / 2),
+                    Math.Log(1 / ((EURAUD.Ask + EURAUD.Bid) / 2)),
+                    Math.Log((AUDJPY.Ask + AUDJPY.Bid) / 2),
+                    Math.Log(1 / ((GBPAUD.Ask + GBPAUD.Bid) / 2)),
+                    0.0,
+                    Math.Log((AUDCAD.Ask + AUDCAD.Bid) / 2),
+                    Math.Log((AUDCHF.Ask + AUDCHF.Bid) / 2)
+
+                },
+                {
+
+
+                    Math.Log(1 / ((USDCAD.Ask + USDCAD.Bid) / 2)),
+                    Math.Log(1 / ((EURCAD.Ask + EURCAD.Bid) / 2)),
+                    Math.Log((CADJPY.Ask + CADJPY.Bid) / 2),
+                    Math.Log(1 / ((GBPCAD.Ask + GBPCAD.Bid) / 2)),
+                    Math.Log(1 / ((AUDCAD.Ask + AUDCAD.Bid) / 2)),
+                    0.0,
+                    Math.Log((CADCHF.Ask + CADCHF.Bid) / 2)
+
+                },
+                {
+
+
+
+                    Math.Log(1 / ((USDCHF.Ask + USDCHF.Bid) / 2)),
+                    Math.Log(1 / ((EURCHF.Ask + EURCHF.Bid) / 2)),
+                    Math.Log((CHFJPY.Ask + CHFJPY.Bid) / 2),
+                    Math.Log(1 / ((GBPCHF.Ask + GBPCHF.Bid) / 2)),
+                    Math.Log(1 / ((AUDCHF.Ask + AUDCHF.Bid) / 2)),
+                    Math.Log(1 / ((CADCHF.Ask + CADCHF.Bid) / 2)),
+                    0.0
+
+                }
+            };
+
+
+
+                        /*
+            Print("Symbol: {0}, Ask: {1}", EURUSD.Code, EURUSD.Ask);
+            Print("Symbol: {0}, Ask: {1}", USDJPY.Code, USDJPY.Ask);
+            Print("Symbol: {0}, Ask: {1}", GBPUSD.Code, GBPUSD.Ask);
+            Print("Symbol: {0}, Ask: {1}", AUDUSD.Code, AUDUSD.Ask);
+            Print("Symbol: {0}, Ask: {1}", USDCAD.Code, USDCAD.Ask);
+            Print("Symbol: {0}, Ask: {1}", USDCHF.Code, USDCHF.Ask);
+            Print("Symbol: {0}, Ask: {1}", EURJPY.Code, EURJPY.Ask);
+            Print("Symbol: {0}, Ask: {1}", EURGBP.Code, EURGBP.Ask);
+            Print("Symbol: {0}, Ask: {1}", EURAUD.Code, EURAUD.Ask);
+            Print("Symbol: {0}, Ask: {1}", EURCAD.Code, EURCAD.Ask);
+            Print("Symbol: {0}, Ask: {1}", EURCHF.Code, EURCHF.Ask);
+            Print("Symbol: {0}, Ask: {1}", GBPJPY.Code, GBPJPY.Ask);
+            Print("Symbol: {0}, Ask: {1}", GBPAUD.Code, GBPAUD.Ask);
+            Print("Symbol: {0}, Ask: {1}", GBPCHF.Code, GBPCHF.Ask);
+            Print("Symbol: {0}, Ask: {1}", GBPCAD.Code, GBPCAD.Ask);
+            Print("Symbol: {0}, Ask: {1}", AUDJPY.Code, AUDJPY.Ask);
+            Print("Symbol: {0}, Ask: {1}", AUDCAD.Code, AUDCAD.Ask);
+            Print("Symbol: {0}, Ask: {1}", AUDCHF.Code, AUDCHF.Ask);
+            Print("Symbol: {0}, Ask: {1}", CADJPY.Code, CADJPY.Ask);
+            Print("Symbol: {0}, Ask: {1}", CADCHF.Code, CADCHF.Ask);
+
+
+*/
+
+
+            /*
+
+double[,] S = new double[1, 7] 
+            {
+                {
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                }
+            };
+            
+            */
+
+double[] S = new double[7];
+
+            double[,] R = new double[7, 7] 
+            {
+                {
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                },
+                {
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                },
+                {
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                },
+                {
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                },
+                {
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                },
+                {
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                },
+                {
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0
+                }
+            };
+
+
+            double temp = 0.0;
+
+            for (int i = 0; i < 7; i++)
+            {
+
+                temp = Y[i, 0] + Y[i, 1] + Y[i, 2] + Y[i, 3] + Y[i, 4] + Y[i, 5] + Y[i, 6];
+
+                S[i] = -(1 / 7) * (temp);
+
+              //  Print(S[i]);
+
+
+
+            }
+            /*
+                Print(Y[i, 0]);
+                Print(Y[i, 1]);
+                Print(Y[i, 2]);
+                Print(Y[i, 3]);
+                Print(Y[i, 4]);
+                Print(Y[i, 5]);
+                Print(Y[i, 6]);
+                */
+                
+            var csvData = new System.Text.StringBuilder();
+
+
+            for (int j = 0; j < 7; j++)
+            {
+                for (int k = 0; k < 7; k++)
+                {
+                    R[j, k] = Math.Abs(Y[j, k] - (S[j] - S[k]));
+
+                    // Print R values and corresponding currency pair codes
+                    Print("R[{0},{1}] = {2} ({3}/{4})", j, k, R[j, k], CurrencyPairCodes[j], CurrencyPairCodes[k]);
+                    
+                    // Append the R value and corresponding currency pair codes to the csvData
+                    csvData.AppendLine(string.Format("{0},{1},{2}", CurrencyPairCodes[j], CurrencyPairCodes[k], R[j, k]));
+                
+
+                }
+            }
+
+            // Save the CSV data to a file
+            SaveToCsv("residual_data.csv", csvData.ToString());
+
+
+        }
+        
+        // Helper method to save data to a CSV file
+        private void SaveToCsv(string fileName, string data)
+        {
+            var filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), fileName);
+
+            try
+            {
+                using (StreamWriter sw = new StreamWriter(filePath, false))
+                {
+                    sw.Write(data);
+                }
+
+                Print("Data saved to CSV file: {0}", filePath);
+            }
+            catch (Exception ex)
+            {
+                Print("Error saving data to CSV file: {0}", ex.Message);
+            }
+        }
+        /*
+
+            Print(S[0, 0]);
+            Print(S[0, 1]);
+            Print(S[0, 2]);
+            Print(S[0, 3]);
+            Print(S[0, 4]);
+            Print(S[0, 5]);
+            Print(S[0, 6]);
+         */   
+
+        /*
+            Print(R[0, 0]);
+            Print(R[0, 1]);
+            Print(R[0, 2]);
+            Print(R[0, 3]);
+            Print(R[0, 4]);
+            Print(R[0, 5]);
+            Print(R[0, 6]);
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // Put your core logic here
+
+
+        protected override void OnStop()
+        {
+            // Put your deinitialization logic here
+        }
+    }
+}
