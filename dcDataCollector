@@ -1,0 +1,72 @@
+using System;
+using cAlgo.API;
+using System.IO;
+
+namespace cAlgo.Robots
+{
+    [Robot(TimeZone = TimeZones.UTC)]
+    public class DataCollectorBot : Robot
+    {
+        [Parameter("Symbol", DefaultValue = "EURUSD")]
+        public new string SymbolName { get; set; }
+
+        private string filePath;
+        private string folderPath;
+        private double[] previousLogPrices;
+        private int[] numberOfDirectionalChanges;
+        private double[] thresholds;
+
+        protected override void OnStart()
+        {
+            previousLogPrices = new double[100];
+            numberOfDirectionalChanges = new int[100];
+            thresholds = new double[100];
+
+            for (int i = 0; i < 100; i++)
+            {
+                previousLogPrices[i] = (Math.Log(Symbol.Bid) + Math.Log(Symbol.Ask)) / 2;
+                thresholds[i] = (i + 1) * 0.00001; // You can customize this part
+            }
+
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            var fileName = $"{SymbolName}_directional_changes_{timestamp}.csv";
+            folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "cBotData");
+            Directory.CreateDirectory(folderPath);
+            filePath = Path.Combine(folderPath, fileName);
+
+            using (var writer = File.CreateText(filePath))
+            {
+                writer.WriteLine("Threshold,Number of Directional Changes");
+            }
+        }
+
+        protected override void OnTick()
+        {
+            var currentLogPrice = (Math.Log(Symbol.Bid) + Math.Log(Symbol.Ask)) / 2;
+
+            for (int i = 0; i < 100; i++)
+            {
+                var directionalChangeSize = currentLogPrice - previousLogPrices[i];
+                if (Math.Abs(directionalChangeSize) >= thresholds[i])
+                {
+                    numberOfDirectionalChanges[i]++;
+                    previousLogPrices[i] = currentLogPrice;
+                }
+            }
+        }
+
+        protected override void OnStop()
+       
+{
+    // Write the final results
+    using (var writer = File.AppendText(filePath))
+    {
+        for (int i = 0; i < 100; i++)
+        {
+            writer.WriteLine($"{thresholds[i]:0.00000},{numberOfDirectionalChanges[i]}"); // Format the threshold as a fixed-point number with five decimal places
+        }
+    }
+}
+
+    }
+}
