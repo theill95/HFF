@@ -1,0 +1,16 @@
+﻿{
+  "Chart": {
+    "Symbol": "EURUSD",
+    "Period": "m1"
+  },
+  "Parameters": {
+    "Threshold": "0.6930000000000001",
+    "Threshold2": "0.268",
+    "ConsecutiveThresholdPeriods": "5",
+    "Volume": "10000",
+    "StopLossPipsBuy": "45.660000000000004",
+    "TakeProfitPipsBuy": "5.72",
+    "StopLossPipsSell": "48.5",
+    "TakeProfitPipsSell": "36.06"
+  }
+}
