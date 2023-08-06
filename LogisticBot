@@ -1,0 +1,122 @@
+using System;
+using cAlgo.API;
+using cAlgo.API.Indicators;
+using cAlgo.API.Internals;
+
+namespace cAlgo.Robots
+{
+    [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.None)]
+    public class LogisticRegressionBot : Robot
+    {
+        [Parameter("Threshold", DefaultValue = 0.7, MinValue = 0.3, MaxValue = 1)]
+        public double Threshold { get; set; }
+        
+        [Parameter("Threshold2", DefaultValue = 0.3, MinValue = 0, MaxValue = 0.7)]
+        public double Threshold2 { get; set; }
+
+        [Parameter("Consecutive Threshold Periods", DefaultValue = 3, MinValue = 1)]
+        public int ConsecutiveThresholdPeriods { get; set; }
+
+        [Parameter("Volume", DefaultValue = 10000, MinValue = 1000)]
+        public int Volume { get; set; }
+
+      [Parameter("Stop Loss (in pips) for Buy", DefaultValue = 10.0)]
+        public double StopLossPipsBuy { get; set; }
+
+        [Parameter("Take Profit (in pips) for Buy", DefaultValue = 20.0)]
+        public double TakeProfitPipsBuy { get; set; }
+
+        [Parameter("Stop Loss (in pips) for Sell", DefaultValue = 10.0)]
+        public double StopLossPipsSell { get; set; }
+
+        [Parameter("Take Profit (in pips) for Sell", DefaultValue = 20.0)]
+        public double TakeProfitPipsSell { get; set; }
+
+        private RelativeStrengthIndex _rsi;
+        private StochasticOscillator _stochastic;
+        private MacdCrossOver _macd;
+        private MovingAverage _sma5;
+        private ExponentialMovingAverage _ema5;
+
+        protected override void OnStart()
+        {
+            _rsi = Indicators.RelativeStrengthIndex(MarketSeries.Close, 5);
+            _stochastic = Indicators.StochasticOscillator(5, 3, 3, MovingAverageType.Simple);
+            _macd = Indicators.MacdCrossOver(12, 26, 9);
+            _sma5 = Indicators.SimpleMovingAverage(MarketSeries.Close, 5);
+            _ema5 = Indicators.ExponentialMovingAverage(MarketSeries.Close, 5);
+        }
+
+        protected override void OnTick()
+        {
+            var prediction = GetPrediction();
+            int index = MarketSeries.Close.Count - 1;
+
+            Print($"RSI: {_rsi.Result.LastValue}");
+            Print($"Stochastic %K: {_stochastic.PercentK.LastValue}");
+            Print($"Stochastic %D: {_stochastic.PercentD.LastValue}");
+            Print($"MACD Histogram: {_macd.Histogram.LastValue}");
+            Print($"Close Price: {MarketSeries.Close[index]}");
+            Print($"Value of z: {prediction.zValue}");
+            Print($"Prediction Value: {prediction.predValue}");
+
+            if (prediction.predValue > Threshold && Positions.Count == 0)
+            {
+                ExecuteOrder(TradeType.Buy);
+            }
+            else if (prediction.predValue < Threshold2 && Positions.Count == 0)
+            {
+                ExecuteOrder(TradeType.Sell);
+            }
+        }
+
+        private (double zValue, double predValue) GetPrediction()
+        {
+            int index = MarketSeries.Close.Count - 1;
+
+            double momentum5 = MarketSeries.Close[index] - MarketSeries.Close[index - 5];
+            double macdDirection = _macd.Histogram.LastValue > 0 ? 1 : 0;
+            double roc = (MarketSeries.Close[index] - MarketSeries.Close[index - 5]) / MarketSeries.Close[index - 5];
+
+            double z = 
+                10.113808 * (_stochastic.PercentK.LastValue / 100) +
+                0.624125 * macdDirection + 
+                0.512754 * roc +
+                0.030804 * _ema5.Result.LastValue * _rsi.Result.LastValue +
+                0.012823 * _sma5.Result.LastValue * _rsi.Result.LastValue +
+                0.010071 * _rsi.Result.LastValue +
+                0.005570 * momentum5 +
+                -0.003882 * (MarketSeries.Close[index] - MarketSeries.Close[index - 2]) + 
+                -0.006890 * (MarketSeries.Close[index] - MarketSeries.Close[index - 3]) + 
+                -0.015783 * (MarketSeries.Close[index] - MarketSeries.Close[index - 1]) +
+                -2.309947 * (MarketSeries.Close[index] - MarketSeries.Close[index - 1] > 0 ? 1 : 0) + 
+                -11.022529 * (_stochastic.PercentD.LastValue / 100);
+
+            double prediction = 1 / (1 + Math.Exp(-z));
+
+            return (z, prediction);
+        }
+
+private void ExecuteOrder(TradeType tradeType)
+{
+    double stopLossPips, takeProfitPips;
+
+    if (tradeType == TradeType.Buy)
+    {
+        stopLossPips = StopLossPipsBuy;
+        takeProfitPips = TakeProfitPipsBuy;
+    }
+    else // TradeType.Sell
+    {
+        stopLossPips = StopLossPipsSell;
+        takeProfitPips = TakeProfitPipsSell;
+    }
+
+    ExecuteMarketOrder(tradeType, Symbol, Volume, "LogisticRegBot", stopLossPips, takeProfitPips);
+}
+
+
+
+
+    }
+}
