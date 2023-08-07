@@ -1,16 +1,16 @@
-﻿{
+{
   "Chart": {
     "Symbol": "EURUSD",
-    "Period": "m1"
+    "Period": "m5"
   },
   "Parameters": {
-    "Threshold": "0.6930000000000001",
-    "Threshold2": "0.268",
-    "ConsecutiveThresholdPeriods": "5",
-    "Volume": "10000",
-    "StopLossPipsBuy": "45.660000000000004",
-    "TakeProfitPipsBuy": "5.72",
-    "StopLossPipsSell": "48.5",
-    "TakeProfitPipsSell": "36.06"
+    "Threshold": "0.307",
+    "Threshold2": "0.031",
+    "ConsecutiveThresholdPeriods": "16",
+    "Volume": "100000",
+    "StopLossPipsBuy": "31.71",
+    "TakeProfitPipsBuy": "1.67",
+    "StopLossPipsSell": "66.62",
+    "TakeProfitPipsSell": "1.92"
   }
 }
